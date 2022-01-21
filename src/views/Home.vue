@@ -3,7 +3,9 @@
 		app-name="mail"
 		@shortkey.native="onNewMessage">
 		<Navigation />
-		<MailboxThread v-if="activeAccount"
+		<Outbox
+			v-if="$route.name === 'outbox'" />
+		<MailboxThread v-else-if="activeAccount"
 			:account="activeAccount"
 			:mailbox="activeMailbox" />
 	</Content>
@@ -16,6 +18,7 @@ import isMobile from '@nextcloud/vue/dist/Mixins/isMobile'
 import logger from '../logger'
 import MailboxThread from '../components/MailboxThread'
 import Navigation from '../components/Navigation'
+import Outbox from '../components/Outbox'
 
 export default {
 	name: 'Home',
@@ -23,6 +26,7 @@ export default {
 		Content,
 		MailboxThread,
 		Navigation,
+		Outbox,
 	},
 	mixins: [isMobile],
 	computed: {

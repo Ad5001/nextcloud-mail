@@ -33,6 +33,11 @@ export default new Router({
 			component: Home,
 		},
 		{
+			path: '/outbox/:messageId?',
+			name: 'outbox',
+			component: Home,
+		},
+		{
 			path: '/setup',
 			name: 'setup',
 			component: Setup,

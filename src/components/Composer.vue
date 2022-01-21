@@ -609,11 +609,17 @@ export default {
 		},
 		getMessageData(id) {
 			return {
+				// TODO: Rename account to accountId
 				account: this.selectedAlias.id,
 				aliasId: this.selectedAlias.aliasId,
+				/*
 				to: this.selectTo.map(this.recipientToRfc822).join(', '),
 				cc: this.selectCc.map(this.recipientToRfc822).join(', '),
 				bcc: this.selectBcc.map(this.recipientToRfc822).join(', '),
+				*/
+				to: this.selectTo,
+				cc: this.selectCc,
+				bcc: this.selectBcc,
 				draftId: id,
 				subject: this.subjectVal,
 				body: this.encrypt ? plain(this.bodyVal) : html(this.bodyVal),

@@ -25,6 +25,8 @@ import { showWarning } from '@nextcloud/dialogs'
 import Axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'
+import * as OutboxService from '../service/OutboxService'
+
 export default {
 	name: 'NewMessageModal',
 	components: {
@@ -127,11 +129,27 @@ export default {
 		},
 		async sendMessage(data) {
 			logger.debug('sending message', { data })
+			const now = new Date().getTime()
 			const dataForServer = {
-				...data,
+				accountId: data.account,
+				sendAt: Math.floor(now / 1000), // JS timestamp is in milliseconds
+				subject: data.subject,
 				body: data.isHtml ? data.body.value : toPlain(data.body).value,
+				isHtml: data.isHtml,
+				isMdn: false,
+				inReplyToMessageId: '',
+				recipients: [
+					...data.to,
+					...data.cc,
+					...data.bcc,
+				],
+				attachmentIds: [],
 			}
-			await sendMessage(data.account, dataForServer)
+
+			const message = await OutboxService.enqueueMessage(dataForServer)
+			setTimeout(async() => {
+				await OutboxService.sendMessage(message.id)
+			}, Math.max(new Date().getTime() - now, 0))
 
 			// Remove old draft envelope
 			this.$store.commit('removeEnvelope', { id: data.draftId })
