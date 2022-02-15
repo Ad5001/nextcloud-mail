@@ -78,8 +78,8 @@ class OutboxService implements ILocalMailboxService {
 			// Attach related data
 			return array_map(function (LocalMailboxMessage $message) use ($userId) {
 				$row = $message->jsonSerialize();
-				$row['attachments'] = $this->attachmentMapper->findForLocalMailbox($message->getId(), $userId);
-				$row['recipients'] = $this->recipientMapper->findRecipients($message->getId(), Recipient::MAILBOX_TYPE_OUTBOX);
+				$row['attachments'] = $this->attachmentMapper->findByLocalMailboxMessageId($message->getId(), $userId);
+				$row['recipients'] = $this->recipientMapper->findByMessageId($message->getId(), Recipient::MAILBOX_TYPE_OUTBOX);
 				return $row;
 			}, $messages);
 		} catch (Exception $e) {
@@ -92,8 +92,8 @@ class OutboxService implements ILocalMailboxService {
 	 * @return LocalMailboxMessage
 	 * @throws DoesNotExistException
 	 */
-	public function getMessage(int $id): LocalMailboxMessage {
-		return $this->mapper->find($id);
+	public function getMessage(int $id, string $userId): LocalMailboxMessage {
+		return $this->mapper->findById($id, $userId);
 	}
 
 	/**

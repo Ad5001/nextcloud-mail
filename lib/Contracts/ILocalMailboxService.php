@@ -46,7 +46,7 @@ interface ILocalMailboxService {
 	 *
 	 * @throws ServiceException
 	 */
-	public function getMessage(int $id): LocalMailboxMessage;
+	public function getMessage(int $id, string $userId): LocalMailboxMessage;
 
 	/**
 	 * @param LocalMailboxMessage $message

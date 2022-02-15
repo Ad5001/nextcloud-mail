@@ -83,7 +83,7 @@ class OutboxController extends Controller {
 	 */
 	public function get(int $id): JSONResponse {
 		try {
-			$message = $this->service->getMessage($id);
+			$message = $this->service->getMessage($id, $this->userId);
 			$this->accountService->find($this->userId, $message->getAccountId());
 		} catch (ClientException $e) {
 			return new JSONResponse($e->getMessage(), $e->getCode());
@@ -133,7 +133,7 @@ class OutboxController extends Controller {
 		}
 
 		$message = new LocalMailboxMessage();
-		$message->setType(LocalMailboxMessage::OUTGOING);
+		$message->setType(LocalMailboxMessage::TYPE_OUTGOING);
 		$message->setAccountId($accountId);
 		$message->setAliasId($aliasId);
 		$message->setSendAt($sendAt);
@@ -161,7 +161,7 @@ class OutboxController extends Controller {
 	 */
 	public function send(int $id):JSONResponse {
 		try {
-			$message = $this->service->getMessage($id);
+			$message = $this->service->getMessage($id, $this->userId);
 			$account = $this->accountService->find($this->userId, $message->getAccountId());
 			$this->service->sendMessage($message, $account);
 		} catch (DoesNotExistException $e) {
@@ -181,7 +181,7 @@ class OutboxController extends Controller {
 	 */
 	public function delete(int $id): JSONResponse {
 		try {
-			$message = $this->service->getMessage($id);
+			$message = $this->service->getMessage($id, $this->userId);
 			$this->accountService->find($this->userId, $message->getAccountId());
 			$this->service->deleteMessage($message, $this->userId);
 		} catch (ServiceException | ClientException $e) {
