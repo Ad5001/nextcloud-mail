@@ -22,13 +22,6 @@
 
 <template>
 	<div>
-		<!--
-		<div
-			v-for="message in messages"
-			:key="message.id">
-			{{ message.subject }}
-		</div>
-		-->
 		<OutboxMessageListItem
 			v-for="message in messages"
 			:key="message.id"

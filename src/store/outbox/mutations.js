@@ -27,4 +27,8 @@ export default {
 		const existing = state.messages[message.id] ?? {}
 		Vue.set(state.messages, message.id, Object.assign({}, existing, message))
 	},
+
+	deleteMessage(state, { id }) {
+		Vue.delete(state.messages, id)
+	},
 }

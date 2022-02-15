@@ -21,6 +21,7 @@
  */
 
 import * as OutboxService from '../../service/OutboxService'
+import logger from '../../logger'
 
 export default {
 	async fetchMessages({ commit }) {
@@ -29,5 +30,33 @@ export default {
 			commit('addMessage', { message })
 		}
 		return messages
+	},
+
+	async deleteMessage({ commit }, { id }) {
+		await OutboxService.deleteMessage(id)
+		commit('deleteMessage', { id })
+	},
+
+	async enqueueMessage({ commit }, { message }) {
+		message = await OutboxService.enqueueMessage(message)
+		commit('addMessage', { message })
+		return message
+	},
+
+	async sendMessage({ commit, getters }, { id }) {
+		// Skip if the message has been deleted/undone in the meantime
+		if (!getters.getMessage(id)) {
+			logger.debug('Skipped sending message that was undone')
+			return
+		}
+
+		try {
+			await OutboxService.sendMessage(id)
+		} catch (error) {
+			logger.error(`Failed to send message ${id} from outbox`)
+			return
+		}
+
+		commit('deleteMessage', id)
 	},
 }

@@ -46,7 +46,9 @@
 
 				<div class="outbox-message-content__box__header__right">
 					<Moment class="timestamp" :timestamp="message.sendAt" />
-					<button class="primary">
+					<button
+						class="primary"
+						@click="deleteMessage">
 						{{ t('mail', 'Undo') }}
 					</button>
 				</div>
@@ -96,6 +98,12 @@ export default {
 			const to = this.message.to ?? []
 			const cc = this.message.cc ?? []
 			return uniqBy(prop('email'), [from, ...to, ...cc])
+		},
+	},
+	methods: {
+		async deleteMessage() {
+			await this.$store.dispatch('outbox/deleteMessage', { id: this.message.id })
+			await this.$router.replace({ name: 'outbox' })
 		},
 	},
 }

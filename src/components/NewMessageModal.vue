@@ -25,7 +25,6 @@ import { showWarning } from '@nextcloud/dialogs'
 import Axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'
-import * as OutboxService from '../service/OutboxService'
 
 export default {
 	name: 'NewMessageModal',
@@ -138,18 +137,21 @@ export default {
 				isHtml: data.isHtml,
 				isMdn: false,
 				inReplyToMessageId: '',
-				recipients: [
-					...data.to,
-					...data.cc,
-					...data.bcc,
-				],
+				to: data.to,
+				cc: data.cc,
+				bcc: data.bcc,
 				attachmentIds: [],
 			}
 
-			const message = await OutboxService.enqueueMessage(dataForServer)
+			// TODO: this should be configurable via the settings modal
+			const sendAt = now + 30 // send in 30 s
+
+			const message = await this.$store.dispatch('outbox/enqueueMessage', {
+				message: dataForServer,
+			})
 			setTimeout(async() => {
-				await OutboxService.sendMessage(message.id)
-			}, Math.max(new Date().getTime() - now, 0))
+				await this.$store.dispatch('outbox/sendMessage', { id: message.id })
+			}, Math.max(sendAt - now, 0))
 
 			// Remove old draft envelope
 			this.$store.commit('removeEnvelope', { id: data.draftId })
