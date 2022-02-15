@@ -111,11 +111,12 @@ class LocalAttachmentMapper extends QBMapper {
 			$qb = $this->db->getQueryBuilder();
 			$qb->select('attachment_id')
 				->from('mail_local_mb_attchmts')
-				->where($qb->expr()->eq('local_message_id', $qb->createNamedParameter($localMessageId), IQueryBuilder::PARAM_INT));
+				->where($qb->expr()->eq('local_message_id', $qb->createParameter('local_message_id'), IQueryBuilder::PARAM_INT));
 
 			$qb1 = $this->db->getQueryBuilder();
 			$qb1->delete($this->getTableName())
 				->where($qb1->expr()->in('id', $qb1->createFunction($qb->getSQL()), IQueryBuilder::PARAM_INT_ARRAY), IQueryBuilder::PARAM_INT_ARRAY);
+			$qb1->setParameter('local_message_id', $localMessageId, IQueryBuilder::PARAM_INT);
 			$qb1->execute();
 
 			$qb2 = $this->db->getQueryBuilder();
@@ -126,6 +127,7 @@ class LocalAttachmentMapper extends QBMapper {
 			$this->db->rollBack();
 			throw $e;
 		}
+		$this->db->commit();
 	}
 
 	public function createLocalMailboxAttachment(int $localMessageId, string $userId, string $fileName, string $mimetype): void {
@@ -152,6 +154,7 @@ class LocalAttachmentMapper extends QBMapper {
 			$this->db->rollBack();
 			throw $e;
 		}
+		$this->db->commit();
 	}
 
 	public function linkAttachmentToMessage(int $messageId, array $attachmentIds): void {

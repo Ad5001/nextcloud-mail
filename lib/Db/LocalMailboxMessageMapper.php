@@ -124,6 +124,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 			$this->db->rollBack();
 			throw $e;
 		}
+		$this->db->commit();
 	}
 
 	public function deleteWithRelated(LocalMailboxMessage $message): void {
@@ -136,5 +137,6 @@ class LocalMailboxMessageMapper extends QBMapper {
 			$this->db->rollBack();
 			throw $e;
 		}
+		$this->db->commit();
 	}
 }

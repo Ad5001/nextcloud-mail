@@ -88,7 +88,7 @@ class RecipientMapper extends QBMapper {
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->insert($this->getTableName());
-		$qb->setValue('message_id, ', $qb->createParameter('message_id'));
+		$qb->setValue('message_id', $qb->createParameter('message_id'));
 		$qb->setValue('type', $qb->createParameter('type'));
 		$qb->setValue('label', $qb->createParameter('label'));
 		$qb->setValue('email', $qb->createParameter('email'));
