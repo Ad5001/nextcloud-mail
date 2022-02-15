@@ -92,7 +92,7 @@ class Version2000Date20220104144742 extends SimpleMigrationStep {
 		]);
 		$localMailboxTable->setPrimaryKey(['id']);
 
-		$attachmentsTable = $schema->createTable('mail_lcl_mbx_attchmts');
+		$attachmentsTable = $schema->createTable('mail_local_mb_attchmts');
 		$attachmentsTable->addColumn('id', 'integer', [
 			'autoincrement' => true,
 			'notnull' => true,

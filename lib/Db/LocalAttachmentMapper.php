@@ -51,7 +51,7 @@ class LocalAttachmentMapper extends QBMapper {
 	public function findByLocalMailboxMessageId(int $localMessageId, string $userId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('a.*')
-			->from('mail_lcl_mbx_attchmts', 'm')
+			->from('mail_local_mb_attchmts', 'm')
 			->join('m', 'mail_attachments', 'a', $qb->expr()->eq('m.attachment_id', 'a.id'))
 			->where(
 				$qb->expr()->eq('a.user_id', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR), IQueryBuilder::PARAM_STR),
@@ -63,7 +63,7 @@ class LocalAttachmentMapper extends QBMapper {
 	public function findByLocalMailboxMessageIds(array $localMessageIds, string $userId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('a.*', 'm.local_message_id')
-			->from('mail_lcl_mbx_attchmts', 'm')
+			->from('mail_local_mb_attchmts', 'm')
 			->join('m', 'mail_attachments', 'a', $qb->expr()->eq('m.attachment_id', 'a.id'))
 			->where(
 				$qb->expr()->eq('a.user_id', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR), IQueryBuilder::PARAM_STR),
@@ -110,7 +110,7 @@ class LocalAttachmentMapper extends QBMapper {
 		try {
 			$qb = $this->db->getQueryBuilder();
 			$qb->select('attachment_id')
-				->from('mail_lcl_mbx_attchmts')
+				->from('mail_local_mb_attchmts')
 				->where($qb->expr()->eq('local_message_id', $qb->createNamedParameter($localMessageId), IQueryBuilder::PARAM_INT));
 
 			$qb1 = $this->db->getQueryBuilder();
@@ -119,7 +119,7 @@ class LocalAttachmentMapper extends QBMapper {
 			$qb1->execute();
 
 			$qb2 = $this->db->getQueryBuilder();
-			$qb2->delete('mail_lcl_mbx_attchmts')
+			$qb2->delete('mail_local_mb_attchmts')
 				->where($qb2->expr()->eq('local_message_id', $qb2->createNamedParameter($localMessageId), IQueryBuilder::PARAM_INT));
 			$qb2->execute();
 		} catch (Throwable $e) {
@@ -143,7 +143,7 @@ class LocalAttachmentMapper extends QBMapper {
 			$result->closeCursor();
 
 			$qb2 = $this->db->getQueryBuilder();
-			$qb2->insert('mail_lcl_mbx_attchmts')
+			$qb2->insert('mail_local_mb_attchmts')
 				->setValue('local_message_id', $qb2->createNamedParameter($localMessageId))
 				->setValue('attachment_id', $qb2->createNamedParameter($attachmentId));
 			$result = $qb2->execute();
@@ -157,7 +157,7 @@ class LocalAttachmentMapper extends QBMapper {
 	public function linkAttachmentToMessage(int $messageId, array $attachmentIds): void {
 		$qb = $this->db->getQueryBuilder();
 
-		$qb->insert('mail_lcl_mbx_attchmts')
+		$qb->insert('mail_local_mb_attchmts')
 			->setValue('message_id', $qb->createNamedParameter($messageId, IQueryBuilder::PARAM_INT));
 		$qb->setValue('attachment_id', $qb->createParameter('attachmentId'));
 
