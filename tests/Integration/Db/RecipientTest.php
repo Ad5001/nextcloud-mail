@@ -41,7 +41,7 @@ class RecipientTest extends TestCase {
 		$recipient->setEmail('penny@stardew-library.edu');
 
 
-		$this->assertEquals(1, $recipient->getId());
+		$this->assertEquals(1, $recipient->getMessageId());
 		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
 		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $recipient->getMailboxType());
 		$this->assertEquals('Penny', $recipient->getLabel());
