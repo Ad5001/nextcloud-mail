@@ -70,7 +70,7 @@ class RecipientMapperTest extends TestCase {
 		$this->outboxRecipient->setMessageId(1);
 		$this->outboxRecipient->setEmail('doc@stardew-clinic.com');
 		$this->outboxRecipient->setType(Recipient::TYPE_TO);
-		$this->outboxRecipient->setMailboxType(Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->outboxRecipient->setMailboxType(Recipient::MAILBOX_TYPE_LOCAL);
 		$this->outboxRecipient->setLabel('Dr. Harvey');
 		$this->mapper->insert($this->outboxRecipient);
 
@@ -78,7 +78,7 @@ class RecipientMapperTest extends TestCase {
 		$this->inboxRecipient->setMessageId(1);
 		$this->inboxRecipient->setEmail('wizard@stardewvalley.com');
 		$this->inboxRecipient->setType(Recipient::TYPE_TO);
-		$this->inboxRecipient->setMailboxType(Recipient::MAILBOX_TYPE_INBOX);
+		$this->inboxRecipient->setMailboxType(Recipient::MAILBOX_TYPE_IMAP);
 		$this->inboxRecipient->setLabel('M. Rasmodius');
 		$this->mapper->insert($this->inboxRecipient);
 
@@ -86,7 +86,7 @@ class RecipientMapperTest extends TestCase {
 		$inboxRecipientTwo->setMessageId(2);
 		$inboxRecipientTwo->setEmail('pierre@stardewvalley.com');
 		$inboxRecipientTwo->setType(Recipient::TYPE_CC);
-		$inboxRecipientTwo->setMailboxType(Recipient::MAILBOX_TYPE_INBOX);
+		$inboxRecipientTwo->setMailboxType(Recipient::MAILBOX_TYPE_IMAP);
 		$inboxRecipientTwo->setLabel("Pierre's General Store");
 		$this->mapper->insert($inboxRecipientTwo);
 	}
@@ -99,7 +99,7 @@ class RecipientMapperTest extends TestCase {
 		$this->assertEquals(1, $recipient->getMessageId());
 		$this->assertEquals('wizard@stardewvalley.com', $recipient->getEmail());
 		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_INBOX, $recipient->getMailboxType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_IMAP, $recipient->getMailboxType());
 		$this->assertEquals('M. Rasmodius', $recipient->getLabel());
 	}
 
@@ -107,14 +107,14 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testFindRecipientsInbox
 	 */
 	public function testFindRecipientsOutbox(): void {
-		$result = $this->mapper->findByMessageId(1, Recipient::MAILBOX_TYPE_OUTBOX);
+		$result = $this->mapper->findByMessageId(1, Recipient::MAILBOX_TYPE_LOCAL);
 		$this->assertCount(1, $result);
 		/** @var Recipient $recipient */
 		$recipient = $result[0];
 		$this->assertEquals(1, $recipient->getMessageId());
 		$this->assertEquals('doc@stardew-clinic.com', $recipient->getEmail());
 		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $recipient->getMailboxType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_LOCAL, $recipient->getMailboxType());
 		$this->assertEquals('Dr. Harvey', $recipient->getLabel());
 	}
 
@@ -122,14 +122,14 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testFindRecipientsOutbox
 	 */
 	public function testFindAllRecipientsOutbox(): void {
-		$result = $this->mapper->findByMessageIds([1,2,789], Recipient::MAILBOX_TYPE_OUTBOX);
+		$result = $this->mapper->findByMessageIds([1,2,789], Recipient::MAILBOX_TYPE_LOCAL);
 		$this->assertCount(1, $result);
 		/** @var Recipient $recipient */
 		$recipient = $result[0];
 		$this->assertEquals(1, $recipient->getMessageId());
 		$this->assertEquals('doc@stardew-clinic.com', $recipient->getEmail());
 		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $recipient->getMailboxType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_LOCAL, $recipient->getMailboxType());
 		$this->assertEquals('Dr. Harvey', $recipient->getLabel());
 	}
 
@@ -140,7 +140,7 @@ class RecipientMapperTest extends TestCase {
 		$result = $this->mapper->findByMessageIds([1,2,57842]);
 		$this->assertCount(2, $result);
 		foreach ($result as $r) {
-			$this->assertEquals(Recipient::MAILBOX_TYPE_INBOX, $r->getMailboxType());
+			$this->assertEquals(Recipient::MAILBOX_TYPE_IMAP, $r->getMailboxType());
 		}
 	}
 
@@ -148,7 +148,7 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testFindAllRecipientsInbox
 	 */
 	public function testFindAllRecipientsEmpty(): void {
-		$result = $this->mapper->findByMessageIds([12,57842], Recipient::MAILBOX_TYPE_OUTBOX);
+		$result = $this->mapper->findByMessageIds([12,57842], Recipient::MAILBOX_TYPE_LOCAL);
 		$this->assertEmpty($result);
 
 		$result = $this->mapper->findByMessageIds([12,57842]);
@@ -160,7 +160,7 @@ class RecipientMapperTest extends TestCase {
 	 */
 	public function testDeleteForLocalMailbox(): void {
 		$this->mapper->deleteForLocalMailbox($this->inboxRecipient->getMessageId());
-		$result = $this->mapper->findByMessageId($this->inboxRecipient->getMessageId(), Recipient::MAILBOX_TYPE_OUTBOX);
+		$result = $this->mapper->findByMessageId($this->inboxRecipient->getMessageId(), Recipient::MAILBOX_TYPE_LOCAL);
 		$this->assertEmpty($result);
 	}
 
@@ -168,16 +168,16 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testDeleteForLocalMailbox
 	 */
 	public function testSaveRecipients(): void {
-		$this->mapper->saveRecipients(3, [['label' => 'Penny', 'email' => 'penny@stardewvalleylibrary.edu']], Recipient::TYPE_FROM, Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->mapper->saveRecipients(3, [['label' => 'Penny', 'email' => 'penny@stardewvalleylibrary.edu']], Recipient::TYPE_FROM, Recipient::MAILBOX_TYPE_LOCAL);
 
-		$results = $this->mapper->findByMessageId(3, Recipient::MAILBOX_TYPE_OUTBOX);
+		$results = $this->mapper->findByMessageId(3, Recipient::MAILBOX_TYPE_LOCAL);
 		$this->assertCount(1, $results);
 
 		/** @var Recipient $entity */
 		$entity = $results[0];
 		$this->assertEquals(1, $entity->getMessageId());
 		$this->assertEquals(Recipient::TYPE_FROM, $entity->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $entity->getMailboxType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_LOCAL, $entity->getMailboxType());
 		$this->assertEquals('Penny', $entity->getLabel());
 		$this->assertEquals('penny@stardewvalleylibrary.edu', $entity->getEmail());
 	}

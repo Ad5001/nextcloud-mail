@@ -42,8 +42,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setEmail(string $email)
  */
 class Recipient extends Entity implements JsonSerializable {
-	public const MAILBOX_TYPE_INBOX = 0;
-	public const MAILBOX_TYPE_OUTBOX = 1;
+	public const MAILBOX_TYPE_IMAP = 0;
+	public const MAILBOX_TYPE_LOCAL = 1;
 
 	public const TYPE_FROM = 0;
 	public const TYPE_TO = 1;

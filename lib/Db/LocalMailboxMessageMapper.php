@@ -75,7 +75,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 		$rows->closeCursor();
 
 		$attachments = $this->attachmentMapper->findByLocalMailboxMessageIds($ids, $userId);
-		$recipients = $this->recipientMapper->findByMessageIds($ids, Recipient::MAILBOX_TYPE_OUTBOX);
+		$recipients = $this->recipientMapper->findByMessageIds($ids, Recipient::MAILBOX_TYPE_LOCAL);
 
 		$recipientMap = [];
 		foreach ($recipients as $r) {
@@ -106,7 +106,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 			);
 		$entity = $this->findEntity($qb);
 		$entity->setAttachments($this->attachmentMapper->findByLocalMailboxMessageId($id, $userId));
-		$entity->setRecipients($this->recipientMapper->findByMessageId($id, Recipient::MAILBOX_TYPE_OUTBOX));
+		$entity->setRecipients($this->recipientMapper->findByMessageId($id, Recipient::MAILBOX_TYPE_LOCAL));
 		return $entity;
 	}
 
@@ -114,9 +114,9 @@ class LocalMailboxMessageMapper extends QBMapper {
 		$this->db->beginTransaction();
 		try {
 			$message = $this->insert($message);
-			$this->recipientMapper->saveRecipients($message->getId(), $to, Recipient::TYPE_TO, Recipient::MAILBOX_TYPE_OUTBOX);
-			$this->recipientMapper->saveRecipients($message->getId(), $cc, Recipient::TYPE_CC, Recipient::MAILBOX_TYPE_OUTBOX);
-			$this->recipientMapper->saveRecipients($message->getId(), $bcc, Recipient::TYPE_BCC, Recipient::MAILBOX_TYPE_OUTBOX);
+			$this->recipientMapper->saveRecipients($message->getId(), $to, Recipient::TYPE_TO, Recipient::MAILBOX_TYPE_LOCAL);
+			$this->recipientMapper->saveRecipients($message->getId(), $cc, Recipient::TYPE_CC, Recipient::MAILBOX_TYPE_LOCAL);
+			$this->recipientMapper->saveRecipients($message->getId(), $bcc, Recipient::TYPE_BCC, Recipient::MAILBOX_TYPE_LOCAL);
 			if (!empty($attachmentIds)) {
 				$this->attachmentMapper->linkAttachmentToMessage($message->getId(), $attachmentIds);
 			}

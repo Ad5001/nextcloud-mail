@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace OCA\Mail\Migration;
 
 use Closure;
+use Doctrine\DBAL\Schema\Table;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
@@ -41,12 +42,6 @@ class Version2000Date20220104144742 extends SimpleMigrationStep {
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();
-
-		$recipientsTable = $schema->getTable('mail_recipients');
-		$recipientsTable->addColumn('mailbox_type', 'integer', [
-			'notnull' => true,
-			'default' => 0,
-		]);
 
 		$localMailboxTable = $schema->createTable('mail_local_mailbox');
 		$localMailboxTable->addColumn('id', 'integer', [
@@ -92,21 +87,23 @@ class Version2000Date20220104144742 extends SimpleMigrationStep {
 		]);
 		$localMailboxTable->setPrimaryKey(['id']);
 
-		$attachmentsTable = $schema->createTable('mail_local_mb_attchmts');
-		$attachmentsTable->addColumn('id', 'integer', [
-			'autoincrement' => true,
-			'notnull' => true,
-			'length' => 4,
+		/** @var Table $recipientsTable */
+		$recipientsTable = $schema->getTable('mail_recipients');
+		$recipientsTable->addColumn('local_message_id', 'integer', [
+			'notnull' => false
 		]);
+		$recipientsTable->changeColumn('message_id', [
+			'notnull' => false
+		]);
+		$recipientsTable->addForeignKeyConstraint($localMailboxTable, ['local_message_id'], ['id'],  ['onDelete' => 'CASCADE']);
+
+		$attachmentsTable = $schema->getTable('mail_attachments');
 		$attachmentsTable->addColumn('local_message_id', 'integer', [
-			'notnull' => true,
-			'length' => 4,
+			'notnull' => false
 		]);
-		$attachmentsTable->addColumn('attachment_id', 'integer', [
-			'notnull' => true,
-			'length' => 4,
-		]);
-		$attachmentsTable->setPrimaryKey(['id']);
+
+		// add FK contraint recipients
+		$attachmentsTable->addForeignKeyConstraint($localMailboxTable, ['local_message_id'], ['id'],  ['onDelete' => 'CASCADE']);
 
 		return $schema;
 	}

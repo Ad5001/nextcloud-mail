@@ -50,6 +50,9 @@ use OCP\AppFramework\Db\Entity;
  */
 class LocalMailboxMessage extends Entity implements JsonSerializable {
 
+	public const TYPE_OUTGOING = 0;
+	public const TYPE_DRAFT = 1;
+
 	/**
 	 * @var int
 	 * @psalm-var self::TYPE_*
@@ -86,16 +89,11 @@ class LocalMailboxMessage extends Entity implements JsonSerializable {
 	/** @var array|null */
 	protected $recipients;
 
-	public const TYPE_OUTGOING = 0;
-	public const TYPE_DRAFT = 1;
-
 	public function __construct() {
 		$this->addType('type', 'integer');
 		$this->addType('accountId', 'integer');
 		$this->addType('aliasId', 'integer');
 		$this->addType('sendAt', 'integer');
-		$this->addType('subject', 'string');
-		$this->addType('body', 'string');
 		$this->addType('html', 'boolean');
 		$this->addType('inReplyToId', 'integer');
 		$this->addType('draftId', 'integer');
@@ -113,7 +111,7 @@ class LocalMailboxMessage extends Entity implements JsonSerializable {
 			'sendAt' => $this->getSendAt(),
 			'subject' => $this->getSubject(),
 			'text' => $this->getBody(),
-			'html' => ($this->isHtml() === true),
+			'html' => $this->isHtml(),
 			'inReplyToId' => $this->getInReplyToId(),
 			'draftId' => $this->getDraftId(),
 			'attachments' => $this->getAttachments(),

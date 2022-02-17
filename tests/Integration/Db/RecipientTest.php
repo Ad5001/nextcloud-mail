@@ -36,14 +36,14 @@ class RecipientTest extends TestCase {
 		$recipient = new Recipient();
 		$recipient->setMessageId(1);
 		$recipient->setType(Recipient::TYPE_TO);
-		$recipient->setMailboxType(Recipient::MAILBOX_TYPE_OUTBOX);
+		$recipient->setMailboxType(Recipient::MAILBOX_TYPE_LOCAL);
 		$recipient->setLabel('Penny');
 		$recipient->setEmail('penny@stardew-library.edu');
 
 
 		$this->assertEquals(1, $recipient->getMessageId());
 		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $recipient->getMailboxType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_LOCAL, $recipient->getMailboxType());
 		$this->assertEquals('Penny', $recipient->getLabel());
 		$this->assertEquals('penny@stardew-library.edu', $recipient->getEmail());
 	}

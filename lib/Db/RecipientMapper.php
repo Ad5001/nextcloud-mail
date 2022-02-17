@@ -41,7 +41,7 @@ class RecipientMapper extends QBMapper {
 	/**
 	 * @returns Recipient[]
 	 */
-	public function findByMessageId(int $messageId, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
+	public function findByMessageId(int $messageId, int $mailboxType = Recipient::MAILBOX_TYPE_IMAP): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$query = $qb->select('*')
@@ -57,7 +57,7 @@ class RecipientMapper extends QBMapper {
 	/**
 	 *  @return Recipient[]
 	 */
-	public function findByMessageIds(array $messageIds, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
+	public function findByMessageIds(array $messageIds, int $mailboxType = Recipient::MAILBOX_TYPE_IMAP): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$query = $qb->select('*')
@@ -76,12 +76,12 @@ class RecipientMapper extends QBMapper {
 		$qb->delete($this->getTableName())
 			->where(
 				$qb->expr()->eq('message_id', $qb->createNamedParameter($messageId, IQueryBuilder::PARAM_INT)),
-				$qb->expr()->eq('mailbox_type', $qb->createNamedParameter(Recipient::MAILBOX_TYPE_OUTBOX, IQueryBuilder::PARAM_INT))
+				$qb->expr()->eq('mailbox_type', $qb->createNamedParameter(Recipient::MAILBOX_TYPE_LOCAL, IQueryBuilder::PARAM_INT))
 			);
 		$qb->execute();
 	}
 
-	public function saveRecipients(int $messageId, array $recipients, int $type, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): void {
+	public function saveRecipients(int $messageId, array $recipients, int $type, int $mailboxType = Recipient::MAILBOX_TYPE_IMAP): void {
 		if (empty($recipients)) {
 			return;
 		}

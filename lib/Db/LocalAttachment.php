@@ -34,6 +34,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setMimeType(string $mimeType)
  * @method int|null getCreatedAt()
  * @method void setCreatedAt(int $createdAt)
+ * @method int|null getLocalMessageId()
+ * @method void setLocalMessageId(int $localMessageId)
  */
 class LocalAttachment extends Entity implements JsonSerializable {
 
@@ -49,12 +51,16 @@ class LocalAttachment extends Entity implements JsonSerializable {
 	/** @var int|null */
 	protected $createdAt;
 
+	/** @var int|null */
+	protected $localMessageId;
+
 	public function jsonSerialize() {
 		return [
 			'id' => $this->id,
 			'fileName' => $this->fileName,
 			'mimeType' => $this->mimeType,
-			'createdAt' => $this->createdAt
+			'createdAt' => $this->createdAt,
+			'localMessageId' => $this->localMessageId
 		];
 	}
 }
