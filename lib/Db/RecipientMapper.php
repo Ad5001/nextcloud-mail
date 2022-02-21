@@ -41,14 +41,13 @@ class RecipientMapper extends QBMapper {
 	/**
 	 * @returns Recipient[]
 	 */
-	public function findByMessageId(int $messageId, int $mailboxType = Recipient::MAILBOX_TYPE_IMAP): array {
+	public function findByLocalMessageId(int $localMessageId): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$query = $qb->select('*')
 			->from($this->getTableName())
 			->where(
-				$qb->expr()->eq('message_id', $qb->createNamedParameter($messageId, IQueryBuilder::PARAM_INT)),
-				$qb->expr()->eq('mailbox_type', $qb->createNamedParameter($mailboxType, IQueryBuilder::PARAM_INT))
+				$qb->expr()->eq('local_message_id', $qb->createNamedParameter($localMessageId, IQueryBuilder::PARAM_INT))
 			);
 
 		return $this->findEntities($query);
@@ -57,49 +56,45 @@ class RecipientMapper extends QBMapper {
 	/**
 	 *  @return Recipient[]
 	 */
-	public function findByMessageIds(array $messageIds, int $mailboxType = Recipient::MAILBOX_TYPE_IMAP): array {
+	public function findByLocalMessageIds(array $localMessageIds): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$query = $qb->select('*')
 			->from($this->getTableName())
 			->where(
-				$qb->expr()->in('message_id', $qb->createNamedParameter($messageIds, IQueryBuilder::PARAM_INT_ARRAY), IQueryBuilder::PARAM_INT_ARRAY),
-				$qb->expr()->eq('mailbox_type', $qb->createNamedParameter($mailboxType, IQueryBuilder::PARAM_INT))
+				$qb->expr()->in('local_message_id', $qb->createNamedParameter($localMessageIds, IQueryBuilder::PARAM_INT_ARRAY), IQueryBuilder::PARAM_INT_ARRAY)
 			);
 
 		return $this->findEntities($query);
 	}
 
-	public function deleteForLocalMailbox(int $messageId): void {
+	public function deleteForLocalMailbox(int $localMessageId): void {
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->delete($this->getTableName())
 			->where(
-				$qb->expr()->eq('message_id', $qb->createNamedParameter($messageId, IQueryBuilder::PARAM_INT)),
-				$qb->expr()->eq('mailbox_type', $qb->createNamedParameter(Recipient::MAILBOX_TYPE_LOCAL, IQueryBuilder::PARAM_INT))
+				$qb->expr()->eq('local_message_id', $qb->createNamedParameter($localMessageId, IQueryBuilder::PARAM_INT))
 			);
 		$qb->execute();
 	}
 
-	public function saveRecipients(int $messageId, array $recipients, int $type, int $mailboxType = Recipient::MAILBOX_TYPE_IMAP): void {
+	public function saveRecipients(int $localMessageId, array $recipients, int $type): void {
 		if (empty($recipients)) {
 			return;
 		}
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->insert($this->getTableName());
-		$qb->setValue('message_id', $qb->createParameter('message_id'));
+		$qb->setValue('local_message_id', $qb->createParameter('local_message_id'));
 		$qb->setValue('type', $qb->createParameter('type'));
 		$qb->setValue('label', $qb->createParameter('label'));
 		$qb->setValue('email', $qb->createParameter('email'));
-		$qb->setValue('mailbox_type', $qb->createParameter('mailbox_type'));
 
 		foreach ($recipients as $recipient) {
-			$qb->setParameter('message_id', $messageId, IQueryBuilder::PARAM_INT);
+			$qb->setParameter('local_message_id', $localMessageId, IQueryBuilder::PARAM_INT);
 			$qb->setParameter('type', $type, IQueryBuilder::PARAM_INT);
 			$qb->setParameter('label', $recipient['label'] ?? $recipient['email'], IQueryBuilder::PARAM_STR);
 			$qb->setParameter('email', $recipient['email'], IQueryBuilder::PARAM_STR);
-			$qb->setParameter('mailbox_type', $mailboxType, IQueryBuilder::PARAM_INT);
 			$qb->execute();
 		}
 	}

@@ -35,15 +35,15 @@ class RecipientTest extends TestCase {
 	public function testGettersSetters(): void {
 		$recipient = new Recipient();
 		$recipient->setMessageId(1);
+		$recipient->setLocalMessageId(100);
 		$recipient->setType(Recipient::TYPE_TO);
-		$recipient->setMailboxType(Recipient::MAILBOX_TYPE_LOCAL);
 		$recipient->setLabel('Penny');
 		$recipient->setEmail('penny@stardew-library.edu');
 
 
 		$this->assertEquals(1, $recipient->getMessageId());
+		$this->assertEquals(100, $recipient->getLocalMessageId());
 		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_LOCAL, $recipient->getMailboxType());
 		$this->assertEquals('Penny', $recipient->getLabel());
 		$this->assertEquals('penny@stardew-library.edu', $recipient->getEmail());
 	}

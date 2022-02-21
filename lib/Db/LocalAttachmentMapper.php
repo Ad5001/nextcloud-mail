@@ -27,7 +27,6 @@ namespace OCA\Mail\Db;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Throwable;
@@ -36,21 +35,18 @@ use Throwable;
  * @template-extends QBMapper<LocalAttachment>
  */
 class LocalAttachmentMapper extends QBMapper {
-	/** @var ITimeFactory */
-	private $timeFactory;
 
 	/**
 	 * @param IDBConnection $db
 	 */
-	public function __construct(IDBConnection $db, ITimeFactory $timeFactory) {
+	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'mail_attachments');
-		$this->timeFactory = $timeFactory;
 	}
 
 	/**
 	 * @return LocalAttachment[]
 	 */
-	public function findByLocalMailboxMessageId(int $localMessageId): array {
+	public function findByLocalMessageId(int $localMessageId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
@@ -63,7 +59,7 @@ class LocalAttachmentMapper extends QBMapper {
 	/**
 	 * @return LocalAttachment[]
 	 */
-	public function findByLocalMailboxMessageIds(array $localMessageIds): array {
+	public function findByLocalMessageIds(array $localMessageIds): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())

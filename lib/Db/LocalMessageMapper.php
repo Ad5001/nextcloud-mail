@@ -33,9 +33,9 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
- * @template-extends QBMapper<LocalMailboxMessage>
+ * @template-extends QBMapper<LocalMessage>
  */
-class LocalMailboxMessageMapper extends QBMapper {
+class LocalMessageMapper extends QBMapper {
 	/** @var LocalAttachmentMapper */
 	private $attachmentMapper;
 
@@ -45,14 +45,14 @@ class LocalMailboxMessageMapper extends QBMapper {
 	public function __construct(IDBConnection $db,
 								LocalAttachmentMapper $attachmentMapper,
 								RecipientMapper $recipientMapper) {
-		parent::__construct($db, 'mail_local_mailbox');
+		parent::__construct($db, 'mail_local_messages');
 		$this->recipientMapper = $recipientMapper;
 		$this->attachmentMapper = $attachmentMapper;
 	}
 
 	/**
 	 * @param string $userId
-	 * @return LocalMailboxMessage[]
+	 * @return LocalMessage[]
 	 * @throws DBException
 	 */
 	public function getAllForUser(string $userId): array {
@@ -62,7 +62,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 			->join('a', $this->getTableName(), 'm', $qb->expr()->eq('m.account_id', 'a.id'))
 			->where(
 				$qb->expr()->eq('a.user_id', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR), IQueryBuilder::PARAM_STR),
-				$qb->expr()->eq('m.type', $qb->createNamedParameter(LocalMailboxMessage::TYPE_OUTGOING, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
+				$qb->expr()->eq('m.type', $qb->createNamedParameter(LocalMessage::TYPE_OUTGOING, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
 			);
 		$rows = $qb->execute();
 
@@ -74,12 +74,12 @@ class LocalMailboxMessageMapper extends QBMapper {
 		}
 		$rows->closeCursor();
 
-		$attachments = $this->attachmentMapper->findByLocalMailboxMessageIds($ids, $userId);
-		$recipients = $this->recipientMapper->findByMessageIds($ids, Recipient::MAILBOX_TYPE_LOCAL);
+		$attachments = $this->attachmentMapper->findByLocalMessageIds($ids);
+		$recipients = $this->recipientMapper->findByLocalMessageIds($ids);
 
 		$recipientMap = [];
 		foreach ($recipients as $r) {
-			$recipientMap[$r->getMessageId()][] = $r;
+			$recipientMap[$r->getLocalMessageId()][] = $r;
 		}
 		$attachmentMap = [];
 		foreach ($attachments as $a) {
@@ -97,7 +97,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 		}, $results);
 	}
 
-	public function findById(int $id, string $userId): LocalMailboxMessage {
+	public function findById(int $id, string $userId): LocalMessage {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
@@ -105,21 +105,18 @@ class LocalMailboxMessageMapper extends QBMapper {
 				$qb->expr()->in('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
 			);
 		$entity = $this->findEntity($qb);
-		$entity->setAttachments($this->attachmentMapper->findByLocalMailboxMessageId($id, $userId));
-		$entity->setRecipients($this->recipientMapper->findByMessageId($id, Recipient::MAILBOX_TYPE_LOCAL));
+		$entity->setAttachments($this->attachmentMapper->findByLocalMessageId($id));
+		$entity->setRecipients($this->recipientMapper->findByLocalMessageId($id));
 		return $entity;
 	}
 
-	public function saveWithRelatedData(LocalMailboxMessage $message, array $to, array $cc, array $bcc, array $attachmentIds = []): void {
+	public function saveWithRelatedData(LocalMessage $message, array $to, array $cc, array $bcc): void {
 		$this->db->beginTransaction();
 		try {
 			$message = $this->insert($message);
-			$this->recipientMapper->saveRecipients($message->getId(), $to, Recipient::TYPE_TO, Recipient::MAILBOX_TYPE_LOCAL);
-			$this->recipientMapper->saveRecipients($message->getId(), $cc, Recipient::TYPE_CC, Recipient::MAILBOX_TYPE_LOCAL);
-			$this->recipientMapper->saveRecipients($message->getId(), $bcc, Recipient::TYPE_BCC, Recipient::MAILBOX_TYPE_LOCAL);
-			if (!empty($attachmentIds)) {
-				$this->attachmentMapper->linkAttachmentToMessage($message->getId(), $attachmentIds);
-			}
+			$this->recipientMapper->saveRecipients($message->getId(), $to, Recipient::TYPE_TO);
+			$this->recipientMapper->saveRecipients($message->getId(), $cc, Recipient::TYPE_CC);
+			$this->recipientMapper->saveRecipients($message->getId(), $bcc, Recipient::TYPE_BCC);
 		} catch (Throwable $e) {
 			$this->db->rollBack();
 			throw $e;
@@ -127,7 +124,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 		$this->db->commit();
 	}
 
-	public function deleteWithRelated(LocalMailboxMessage $message): void {
+	public function deleteWithRelated(LocalMessage $message): void {
 		$this->db->beginTransaction();
 		try {
 			$this->attachmentMapper->deleteForLocalMailbox($message->getId());

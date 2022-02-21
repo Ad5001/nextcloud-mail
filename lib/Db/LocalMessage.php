@@ -48,7 +48,7 @@ use OCP\AppFramework\Db\Entity;
  * @method int|null getDraftId()
  * @method void setDraftId(?int $draftId);
  */
-class LocalMailboxMessage extends Entity implements JsonSerializable {
+class LocalMessage extends Entity implements JsonSerializable {
 
 	public const TYPE_OUTGOING = 0;
 	public const TYPE_DRAFT = 1;

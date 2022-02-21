@@ -43,7 +43,7 @@ class Version2000Date20220104144742 extends SimpleMigrationStep {
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();
 
-		$localMailboxTable = $schema->createTable('mail_local_mailbox');
+		$localMailboxTable = $schema->createTable('mail_local_messages');
 		$localMailboxTable->addColumn('id', 'integer', [
 			'autoincrement' => true,
 			'notnull' => true,
@@ -101,8 +101,6 @@ class Version2000Date20220104144742 extends SimpleMigrationStep {
 		$attachmentsTable->addColumn('local_message_id', 'integer', [
 			'notnull' => false
 		]);
-
-		// add FK contraint recipients
 		$attachmentsTable->addForeignKeyConstraint($localMailboxTable, ['local_message_id'], ['id'],  ['onDelete' => 'CASCADE']);
 
 		return $schema;

@@ -27,15 +27,19 @@ namespace OCA\Mail\Tests\Integration\Db;
 
 use ChristophWurst\Nextcloud\Testing\DatabaseTransaction;
 use ChristophWurst\Nextcloud\Testing\TestCase;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use OCA\Mail\Db\LocalAttachmentMapper;
+use OCA\Mail\Db\LocalMessage;
+use OCA\Mail\Db\LocalMessageMapper;
 use OCA\Mail\Db\Recipient;
 use OCA\Mail\Db\RecipientMapper;
 use OCA\Mail\Tests\Integration\Framework\ImapTestAccount;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\DB\Exception;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 
 class RecipientMapperTest extends TestCase {
-	use DatabaseTransaction;
 	use ImapTestAccount;
 
 	/** @var IDBConnection */
@@ -53,6 +57,9 @@ class RecipientMapperTest extends TestCase {
 	/** @var Recipient */
 	private $outboxRecipient;
 
+	/** @var LocalMessage  */
+	private $message;
+
 	protected function setUp(): void {
 		parent::setUp();
 
@@ -60,98 +67,67 @@ class RecipientMapperTest extends TestCase {
 		$this->mapper = new RecipientMapper(
 			$this->db
 		);
+		$this->localMessageMapper = new LocalMessageMapper(
+			$this->db,
+			$this->createMock(LocalAttachmentMapper::class),
+			$this->createMock(RecipientMapper::class)
+		);
 
 		$qb = $this->db->getQueryBuilder();
 
 		$delete = $qb->delete($this->mapper->getTableName());
 		$delete->execute();
 
+		$qb = $this->db->getQueryBuilder();
+
+		$delete = $qb->delete($this->localMessageMapper->getTableName());
+		$delete->execute();
+
+		$message = new LocalMessage();
+		$message->setType(LocalMessage::TYPE_OUTGOING);
+		$message->setAccountId(1);
+		$message->setAliasId(2);
+		$message->setSendAt(123);
+		$message->setSubject('subject');
+		$message->setBody('message');
+		$message->setHtml(true);
+		$message->setInReplyToId(100);
+		$message->setDraftId(99);
+		$this->message = $this->localMessageMapper->insert($message);
+
 		$this->outboxRecipient = new Recipient();
-		$this->outboxRecipient->setMessageId(1);
+		$this->outboxRecipient->setLocalMessageId($this->message->getId());
 		$this->outboxRecipient->setEmail('doc@stardew-clinic.com');
 		$this->outboxRecipient->setType(Recipient::TYPE_TO);
-		$this->outboxRecipient->setMailboxType(Recipient::MAILBOX_TYPE_LOCAL);
 		$this->outboxRecipient->setLabel('Dr. Harvey');
 		$this->mapper->insert($this->outboxRecipient);
 
-		$this->inboxRecipient = new Recipient();
-		$this->inboxRecipient->setMessageId(1);
-		$this->inboxRecipient->setEmail('wizard@stardewvalley.com');
-		$this->inboxRecipient->setType(Recipient::TYPE_TO);
-		$this->inboxRecipient->setMailboxType(Recipient::MAILBOX_TYPE_IMAP);
-		$this->inboxRecipient->setLabel('M. Rasmodius');
-		$this->mapper->insert($this->inboxRecipient);
-
 		$inboxRecipientTwo = new Recipient();
-		$inboxRecipientTwo->setMessageId(2);
+		$inboxRecipientTwo->setLocalMessageId($this->message->getId());
 		$inboxRecipientTwo->setEmail('pierre@stardewvalley.com');
 		$inboxRecipientTwo->setType(Recipient::TYPE_CC);
-		$inboxRecipientTwo->setMailboxType(Recipient::MAILBOX_TYPE_IMAP);
 		$inboxRecipientTwo->setLabel("Pierre's General Store");
 		$this->mapper->insert($inboxRecipientTwo);
 	}
 
-	public function testFindRecipientsInbox(): void {
-		$result = $this->mapper->findByMessageId(1);
-		$this->assertCount(1, $result);
-		/** @var Recipient $recipient */
-		$recipient = $result[0];
-		$this->assertEquals(1, $recipient->getMessageId());
-		$this->assertEquals('wizard@stardewvalley.com', $recipient->getEmail());
-		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_IMAP, $recipient->getMailboxType());
-		$this->assertEquals('M. Rasmodius', $recipient->getLabel());
-	}
-
-	/**
-	 * @depends testFindRecipientsInbox
-	 */
-	public function testFindRecipientsOutbox(): void {
-		$result = $this->mapper->findByMessageId(1, Recipient::MAILBOX_TYPE_LOCAL);
-		$this->assertCount(1, $result);
-		/** @var Recipient $recipient */
-		$recipient = $result[0];
-		$this->assertEquals(1, $recipient->getMessageId());
-		$this->assertEquals('doc@stardew-clinic.com', $recipient->getEmail());
-		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_LOCAL, $recipient->getMailboxType());
-		$this->assertEquals('Dr. Harvey', $recipient->getLabel());
-	}
-
-	/**
-	 * @depends testFindRecipientsOutbox
-	 */
-	public function testFindAllRecipientsOutbox(): void {
-		$result = $this->mapper->findByMessageIds([1,2,789], Recipient::MAILBOX_TYPE_LOCAL);
-		$this->assertCount(1, $result);
-		/** @var Recipient $recipient */
-		$recipient = $result[0];
-		$this->assertEquals(1, $recipient->getMessageId());
-		$this->assertEquals('doc@stardew-clinic.com', $recipient->getEmail());
-		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_LOCAL, $recipient->getMailboxType());
-		$this->assertEquals('Dr. Harvey', $recipient->getLabel());
-	}
-
-	/**
-	 * @depends testFindAllRecipientsOutbox
-	 */
-	public function testFindAllRecipientsInbox(): void {
-		$result = $this->mapper->findByMessageIds([1,2,57842]);
+	public function testFindRecipients(): void {
+		$result = $this->mapper->findByLocalMessageId($this->message->getId());
 		$this->assertCount(2, $result);
-		foreach ($result as $r) {
-			$this->assertEquals(Recipient::MAILBOX_TYPE_IMAP, $r->getMailboxType());
-		}
 	}
 
 	/**
-	 * @depends testFindAllRecipientsInbox
+	 * @depends testFindRecipients
+	 */
+	public function testFindAllRecipients(): void {
+		$result = $this->mapper->findByLocalMessageIds([$this->message->getId(),789,789]);
+		$this->assertCount(2, $result);
+	}
+
+	/**
+	 * @depends testFindAllRecipients
 	 */
 	public function testFindAllRecipientsEmpty(): void {
-		$result = $this->mapper->findByMessageIds([12,57842], Recipient::MAILBOX_TYPE_LOCAL);
-		$this->assertEmpty($result);
-
-		$result = $this->mapper->findByMessageIds([12,57842]);
+		$result = $this->mapper->findByLocalMessageIds([12,57842]);
 		$this->assertEmpty($result);
 	}
 
@@ -159,8 +135,8 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testFindAllRecipientsEmpty
 	 */
 	public function testDeleteForLocalMailbox(): void {
-		$this->mapper->deleteForLocalMailbox($this->inboxRecipient->getMessageId());
-		$result = $this->mapper->findByMessageId($this->inboxRecipient->getMessageId(), Recipient::MAILBOX_TYPE_LOCAL);
+		$this->mapper->deleteForLocalMailbox($this->message->getId());
+		$result = $this->mapper->findByLocalMessageId($this->message->getId());
 		$this->assertEmpty($result);
 	}
 
@@ -168,17 +144,34 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testDeleteForLocalMailbox
 	 */
 	public function testSaveRecipients(): void {
-		$this->mapper->saveRecipients(3, [['label' => 'Penny', 'email' => 'penny@stardewvalleylibrary.edu']], Recipient::TYPE_FROM, Recipient::MAILBOX_TYPE_LOCAL);
+		$message = new LocalMessage();
+		$message->setType(LocalMessage::TYPE_OUTGOING);
+		$message->setAccountId(1);
+		$message->setAliasId(2);
+		$message->setSendAt(123);
+		$message->setSubject('subject');
+		$message->setBody('message');
+		$message->setHtml(true);
+		$message->setInReplyToId(100);
+		$message->setDraftId(99);
+		$message = $this->localMessageMapper->insert($message);
 
-		$results = $this->mapper->findByMessageId(3, Recipient::MAILBOX_TYPE_LOCAL);
+		$this->mapper->saveRecipients($message->getId(), [['label' => 'Penny', 'email' => 'penny@stardewvalleylibrary.edu']], Recipient::TYPE_FROM);
+
+		$results = $this->mapper->findByLocalMessageId($message->getId());
 		$this->assertCount(1, $results);
 
 		/** @var Recipient $entity */
 		$entity = $results[0];
-		$this->assertEquals(1, $entity->getMessageId());
+		$this->assertEquals($message->getId(), $entity->getLocalMessageId());
+		$this->assertNull($entity->getMessageId());
 		$this->assertEquals(Recipient::TYPE_FROM, $entity->getType());
-		$this->assertEquals(Recipient::MAILBOX_TYPE_LOCAL, $entity->getMailboxType());
 		$this->assertEquals('Penny', $entity->getLabel());
 		$this->assertEquals('penny@stardewvalleylibrary.edu', $entity->getEmail());
+	}
+
+	public function testSaveRecipientsFKConstraint(): void {
+		$this->expectException(ForeignKeyConstraintViolationException::class);
+		$this->mapper->saveRecipients(5678, [['label' => 'Penny', 'email' => 'penny@stardewvalleylibrary.edu']], Recipient::TYPE_FROM);
 	}
 }

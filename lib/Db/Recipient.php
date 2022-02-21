@@ -30,27 +30,24 @@ use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
 /**
- * @method int getMessageId()
+ * @method int|null getMessageId()
  * @method void setMessageId(int $messageId)
+ * @method int|null getLocalMessageId()
+ * @method void setLocalMessageId(int $localMessageId)
  * @method int getType()
  * @method void setType(int $type)
- * @method int getMailboxType()
- * @method void setMailboxType(int $mailboxType)
  * @method string getLabel()
  * @method void setLabel(string $label)
  * @method string getEmail()
  * @method void setEmail(string $email)
  */
 class Recipient extends Entity implements JsonSerializable {
-	public const MAILBOX_TYPE_IMAP = 0;
-	public const MAILBOX_TYPE_LOCAL = 1;
-
 	public const TYPE_FROM = 0;
 	public const TYPE_TO = 1;
 	public const TYPE_CC = 2;
 	public const TYPE_BCC = 3;
 
-	/** @var int */
+	/** @var int|null */
 	protected $messageId;
 
 	/**
@@ -59,8 +56,8 @@ class Recipient extends Entity implements JsonSerializable {
 	 */
 	protected $type;
 
-	/** @var int */
-	protected $mailboxType;
+	/** @var int|null */
+	protected $localMessageId;
 
 	/** @var string */
 	protected $label;
@@ -70,16 +67,17 @@ class Recipient extends Entity implements JsonSerializable {
 
 	public function __construct() {
 		$this->addType('messageId', 'integer');
+		$this->addType('localMessageId', 'integer');
 		$this->addType('type', 'integer');
 		$this->addType('mailboxType', 'integer');
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize(): array {
 		return [
 			'id' => $this->getId(),
 			'messageId' => $this->getMessageId(),
+			'localMessageId' => $this->getLocalMessageId(),
 			'type' => $this->getType(),
-			'mailboxType' => $this->getMailboxType(),
 			'label' => $this->getLabel(),
 			'email' => $this->getEmail()
 		];

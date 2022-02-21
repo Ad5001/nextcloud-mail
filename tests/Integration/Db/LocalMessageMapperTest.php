@@ -28,8 +28,9 @@ namespace OCA\Mail\Tests\Integration\Db;
 use ChristophWurst\Nextcloud\Testing\DatabaseTransaction;
 use ChristophWurst\Nextcloud\Testing\TestCase;
 use OCA\Mail\Db\LocalAttachmentMapper;
-use OCA\Mail\Db\LocalMailboxMessage;
-use OCA\Mail\Db\LocalMailboxMessageMapper;
+use OCA\Mail\Db\LocalMessage;
+use OCA\Mail\Db\LocalMessageMapper;
+use OCA\Mail\Db\MailAccount;
 use OCA\Mail\Db\RecipientMapper;
 use OCA\Mail\Tests\Integration\Framework\ImapTestAccount;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -37,24 +38,23 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class LocalMailboxMessageMapperTest extends TestCase {
-	use DatabaseTransaction;
+class LocalMessageMapperTest extends TestCase {
 	use ImapTestAccount;
 
 	/** @var IDBConnection */
 	private $db;
 
-	/** @var LocalMailboxMessageMapper */
+	/** @var LocalMessageMapper */
 	private $mapper;
 
 	/** @var ITimeFactory| MockObject */
 	private $timeFactory;
 
-	/** @var LocalMailboxMessage */
+	/** @var LocalMessage */
 	private $entity;
 
-	/** @var \OCA\Mail\Db\MailAccount */
-	private $acct;
+	/** @var MailAccount */
+	private $account;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -63,7 +63,7 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$recipientMapper = new RecipientMapper(
 			$this->db
 		);
-		$this->mapper = new LocalMailboxMessageMapper(
+		$this->mapper = new LocalMessageMapper(
 			$this->db,
 			$this->createMock(LocalAttachmentMapper::class),
 			$recipientMapper
@@ -73,11 +73,11 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$delete = $qb->delete($this->mapper->getTableName());
 		$delete->execute();
 
-		$this->acct = $this->createTestAccount();
+		$this->account = $this->createTestAccount();
 
-		$message = new LocalMailboxMessage();
-		$message->setType(LocalMailboxMessage::TYPE_OUTGOING);
-		$message->setAccountId($this->acct->getId());
+		$message = new LocalMessage();
+		$message->setType(LocalMessage::TYPE_OUTGOING);
+		$message->setAccountId($this->account->getId());
 		$message->setAliasId(2);
 		$message->setSendAt(123);
 		$message->setSubject('subject');
@@ -93,9 +93,9 @@ class LocalMailboxMessageMapperTest extends TestCase {
 
 		$this->assertCount(1, $result);
 		$row = $result[0];
-		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $row->getType());
+		$this->assertEquals(LocalMessage::TYPE_OUTGOING, $row->getType());
 		$this->assertEquals(2, $row->getAliasId());
-		$this->assertEquals($this->acct->getId(), $row->getAccountId());
+		$this->assertEquals($this->account->getId(), $row->getAccountId());
 		$this->assertEquals('subject', $row->getSubject());
 		$this->assertEquals('message', $row->getBody());
 		$this->assertEquals(100, $row->getInReplyToId());
@@ -109,11 +109,11 @@ class LocalMailboxMessageMapperTest extends TestCase {
 	 * @depends testFindAllForUser
 	 */
 	public function testFindById(): void {
-		$row = $this->mapper->findById($this->entity->getId(), $this->acct->getUserId());
+		$row = $this->mapper->findById($this->entity->getId(), $this->account->getUserId());
 
-		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $row->getType());
+		$this->assertEquals(LocalMessage::TYPE_OUTGOING, $row->getType());
 		$this->assertEquals(2, $row->getAliasId());
-		$this->assertEquals($this->acct->getId(), $row->getAccountId());
+		$this->assertEquals($this->account->getId(), $row->getAccountId());
 		$this->assertEquals('subject', $row->getSubject());
 		$this->assertEquals('message', $row->getBody());
 		$this->assertEquals(100, $row->getInReplyToId());
@@ -125,7 +125,7 @@ class LocalMailboxMessageMapperTest extends TestCase {
 
 	public function testFindByIdNotFound(): void {
 		$this->expectException(DoesNotExistException::class);
-		$this->mapper->findById(1337, $this->acct->getUserId());
+		$this->mapper->findById(1337, $this->account->getUserId());
 	}
 
 	/**
@@ -145,9 +145,9 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$delete = $qb->delete($this->mapper->getTableName());
 		$delete->execute();
 
-		$message = new LocalMailboxMessage();
-		$message->setType(LocalMailboxMessage::TYPE_OUTGOING);
-		$message->setAccountId($this->acct->getId());
+		$message = new LocalMessage();
+		$message->setType(LocalMessage::TYPE_OUTGOING);
+		$message->setAccountId($this->account->getId());
 		$message->setAliasId(3);
 		$message->setSendAt(3);
 		$message->setSubject('savedWithRelated');
@@ -159,11 +159,11 @@ class LocalMailboxMessageMapperTest extends TestCase {
 
 		$this->mapper->saveWithRelatedData($message, $to, [], []);
 
-		$results = $this->mapper->getAllForUser($this->acct->getUserId());
+		$results = $this->mapper->getAllForUser($this->account->getUserId());
 		$row = $results[0];
-		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $row->getType());
+		$this->assertEquals(LocalMessage::TYPE_OUTGOING, $row->getType());
 		$this->assertEquals(3, $row->getAliasId());
-		$this->assertEquals($this->acct->getId(), $row->getAccountId());
+		$this->assertEquals($this->account->getId(), $row->getAccountId());
 		$this->assertEquals('savedWithRelated', $row->getSubject());
 		$this->assertEquals('message', $row->getBody());
 		$this->assertEquals(1010, $row->getInReplyToId());

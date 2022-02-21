@@ -26,11 +26,11 @@ declare(strict_types=1);
 namespace OCA\Mail\Tests\Integration\Db;
 
 use ChristophWurst\Nextcloud\Testing\TestCase;
-use OCA\Mail\Db\LocalMailboxMessage;
+use OCA\Mail\Db\LocalMessage;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class LocalMailboxMessageTest extends TestCase {
+class LocalMessageTest extends TestCase {
 
 	/** @var ITimeFactory|MockObject  */
 	private $timeFactory;
@@ -41,9 +41,9 @@ class LocalMailboxMessageTest extends TestCase {
 
 	public function testGettersSetters(): void {
 		$time = $this->timeFactory->getTime();
-		$message = new LocalMailboxMessage();
+		$message = new LocalMessage();
 
-		$message->setType(LocalMailboxMessage::TYPE_OUTGOING);
+		$message->setType(LocalMessage::TYPE_OUTGOING);
 		$message->setAccountId(1);
 		$message->setAliasId(2);
 		$message->setSendAt($time);
@@ -53,7 +53,7 @@ class LocalMailboxMessageTest extends TestCase {
 		$message->setInReplyToId(100);
 		$message->setDraftId(99);
 
-		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $message->getType());
+		$this->assertEquals(LocalMessage::TYPE_OUTGOING, $message->getType());
 		$this->assertEquals(1, $message->getAccountId());
 		$this->assertEquals(2, $message->getAliasId());
 		$this->assertEquals($time, $message->getSendAt());
