@@ -27,7 +27,7 @@ export async function fetchMessages() {
 	const url = generateUrl('/apps/mail/api/outbox')
 
 	const { data } = await axios.get(url)
-	return data
+	return data.data
 }
 
 export async function deleteMessage(id) {

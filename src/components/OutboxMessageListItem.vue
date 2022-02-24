@@ -35,21 +35,37 @@
 		<template #subtitle>
 			{{ message.subject }}
 		</template>
-		<template #actions />
+		<template slot="actions">
+			<ActionButton
+				icon="icon-checkmark">
+				{{ t('mail', 'Send message now') }}
+			</ActionButton>
+			<ActionButton
+				icon="icon-delete"
+				:close-after-click="true"
+				@click="deleteMessage">
+				{{ t('mail', 'Delete message') }}
+			</ActionButton>
+		</template>
 	</ListItem>
 </template>
 
 <script>
 import ListItem from '@nextcloud/vue/dist/Components/ListItem'
+import ActionButton from '@nextcloud/vue/dist/Components/ActionButton'
 import Avatar from './Avatar'
 import { calculateAccountColor } from '../util/AccountColor'
 import OutboxAvatarMixin from '../mixins/OutboxAvatarMixin'
+import logger from '../logger'
+import { showError } from '@nextcloud/dialogs'
+import { matchError } from '../errors/match'
 
 export default {
 	name: 'OutboxMessageListItem',
 	components: {
 		ListItem,
 		Avatar,
+		ActionButton,
 	},
 	mixins: [
 		OutboxAvatarMixin,
@@ -80,11 +96,28 @@ export default {
 			return 'Due in 30 seconds'
 		},
 	},
+	methods: {
+		async deleteMessage() {
+			try {
+				await this.$store.dispatch('outbox/deleteMessage', {
+					id: this.message.id,
+				})
+			} catch (error) {
+				showError(await matchError(error, {
+					default(error) {
+						logger.error('could not delete message', error)
+						return t('mail', 'Could not delete message')
+					},
+				}))
+			}
+		},
+	},
 }
 </script>
 
 <style lang="scss" scoped>
 .outbox-message {
+	list-style: none;
 	&.active {
 		background-color: var(--color-background-dark);
 		border-radius: 16px;
@@ -97,6 +130,5 @@ export default {
 		height: 69px;
 		z-index: 1;
 	}
-
 }
 </style>
